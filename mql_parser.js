@@ -54,9 +54,9 @@ function processMql() {
     
     const dllRegex = /\.dll/i;
     const urlRegex = /(https?:\/\/|www\.)/i;
-    const inputRegex = /^(Inp|Input|Lot|Max|Min|Risk|Magic|Period|Enable|Target|Stop|Take|Time|Show|Use)/i;
+    const inputRegex = /(Inp|Input|Lot|Max|Min|Risk|Magic|Period|Enable|Target|Stop|Take|Time|Show|Use)/i;
     const alertRegex = /(license|expired|invalid|unauthorized|error|failed|warning|success|connected|activate|expired|register|buy|crack)/i;
-    const metaRegex = /^(copyright|link|author|version|description|script|indicator|ea|expert|grid)/i;
+    const metaRegex = /(copyright|link|author|version|description|script|indicator|ea|expert|grid)/i;
     
     strings.forEach(item => {
         const text = item.text.trim();
