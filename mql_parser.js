@@ -179,14 +179,15 @@ function extractStringsFromBinary(bytes) {
     const strings = [];
     const len = bytes.length;
     
-    // Heuristic 1: Extract UTF-16LE strings (common in modern EX4/EX5 string tables)
-    // Characters are 2 bytes: ASCII byte followed by 0x00
-    for (let i = 0; i < len - 8; i += 2) {
-        if (bytes[i] >= 32 && bytes[i] <= 126 && bytes[i+1] === 0x00) {
+    // Heuristic 1: Extract UTF-16LE strings (check all offsets to support odd/even alignments)
+    for (let i = 0; i < len - 8; i++) {
+        if (((bytes[i] >= 32 && bytes[i] <= 126) || bytes[i] === 9 || bytes[i] === 10 || bytes[i] === 13) && bytes[i+1] === 0x00) {
             let str = '';
             let start = i;
             let j = i;
-            while (j < len - 1 && bytes[j] >= 32 && bytes[j] <= 126 && bytes[j+1] === 0x00) {
+            while (j < len - 1 && 
+                   ((bytes[j] >= 32 && bytes[j] <= 126) || bytes[j] === 9 || bytes[j] === 10 || bytes[j] === 13) && 
+                   bytes[j+1] === 0x00) {
                 str += String.fromCharCode(bytes[j]);
                 j += 2;
             }
@@ -196,23 +197,22 @@ function extractStringsFromBinary(bytes) {
                     offset: start,
                     type: 'UTF-16LE'
                 });
-                i = j; // skip forward
+                i = j - 1; // skip forward (the loop does i++)
             }
         }
     }
     
-    // Heuristic 2: Extract ASCII null-terminated strings
+    // Heuristic 2: Extract ASCII strings
     for (let i = 0; i < len - 4; i++) {
-        if (bytes[i] >= 32 && bytes[i] <= 126) {
+        if ((bytes[i] >= 32 && bytes[i] <= 126) || bytes[i] === 9 || bytes[i] === 10 || bytes[i] === 13) {
             let str = '';
             let start = i;
             let j = i;
-            while (j < len && bytes[j] >= 32 && bytes[j] <= 126) {
+            while (j < len && ((bytes[j] >= 32 && bytes[j] <= 126) || bytes[j] === 9 || bytes[j] === 10 || bytes[j] === 13)) {
                 str += String.fromCharCode(bytes[j]);
                 j++;
             }
-            // Ensure ended by null or control char, or is a long valid text
-            if (str.length >= 4 && (j === len || bytes[j] === 0 || bytes[j] < 32)) {
+            if (str.length >= 4) {
                 // Avoid duplication if already caught by UTF-16 (starts near)
                 const exists = strings.some(s => Math.abs(s.offset - start) < 4);
                 if (!exists) {
@@ -222,7 +222,7 @@ function extractStringsFromBinary(bytes) {
                         type: 'ASCII'
                     });
                 }
-                i = j;
+                i = j - 1;
             }
         }
     }
