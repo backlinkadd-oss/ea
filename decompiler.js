@@ -148,7 +148,10 @@ dropzone.addEventListener('drop', (e) => {
     }
 });
 
-
+// Click to upload event listener
+dropzone.addEventListener('click', () => {
+    fileInput.click();
+});
 
 fileInput.addEventListener('change', (e) => {
     if (e.target.files.length > 0) {
