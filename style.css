@@ -702,11 +702,15 @@ body {
     text-align: right;
     font-family: 'JetBrains Mono', monospace;
     font-size: 13px;
+    line-height: 1.5;
     color: var(--text-muted);
-    background-color: rgba(0, 0, 0, 0.15);
+    background-color: var(--bg-panel);
     border-right: 1px solid var(--border-light);
     user-select: none;
     min-width: 48px;
+    position: sticky;
+    left: 0;
+    z-index: 10;
 }
 
 .code-output {
@@ -716,7 +720,7 @@ body {
     font-size: 13px;
     line-height: 1.5;
     color: var(--text-primary);
-    overflow: auto;
+    overflow: visible;
     white-space: pre;
     tab-size: 4;
 }
