@@ -299,6 +299,10 @@ body {
     pointer-events: none;
 }
 
+#fileInput {
+    pointer-events: auto !important;
+}
+
 .dropzone-glow {
     position: absolute;
     top: -50%;
