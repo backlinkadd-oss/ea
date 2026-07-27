@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForgeDec - Universal Decompiler & Bytecode Visualizer</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Style -->
+    <link rel="stylesheet" href="style.css">
+    <script>
+        window.onerror = function(message, source, lineno, colno, error) {
+            const banner = document.createElement('div');
+            banner.style.position = 'fixed';
+            banner.style.top = '0';
+            banner.style.left = '0';
+            banner.style.width = '100%';
+            banner.style.background = '#ef4444';
+            banner.style.color = 'white';
+            banner.style.padding = '12px';
+            banner.style.zIndex = '999999';
+            banner.style.fontFamily = 'monospace';
+            banner.style.fontSize = '12px';
+            banner.style.textAlign = 'center';
+            banner.innerHTML = '<strong>Console Error:</strong> ' + message + ' in ' + source.split('/').pop() + ' at line ' + lineno;
+            document.body.appendChild(banner);
+            return false;
+        };
+    </script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo-section">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <h1>ForgeDec</h1>
+                    <span>Universal Decompiler & Inspector (v1.2.0-opacity-label)</span>
+                </div>
+            </div>
+            
+            <div class="status-panel" id="statusPanel">
+                <span class="status-badge idle">Ready</span>
+                <span class="file-name-display" id="headerFileName">No file loaded</span>
+            </div>
+
+            <div class="header-actions">
+                <button class="btn btn-secondary btn-icon" id="btnHelp" title="Help & Documentation">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                </button>
+                <button class="btn btn-primary" id="btnUploadNew" style="display: none;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Upload New
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Body -->
+        <main class="app-main">
+            <!-- Dropzone Screen -->
+            <section class="screen active" id="uploadScreen">
+                <div class="dropzone-container">
+                    <input type="file" id="fileInput" style="opacity: 0; position: absolute; width: 0.1px; height: 0.1px; z-index: -1; overflow: hidden;">
+                    <label class="dropzone" id="dropzone" for="fileInput">
+                        <div class="dropzone-glow"></div>
+                        <div class="dropzone-content">
+                            <div class="upload-icon-wrapper">
+                                <svg class="upload-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="17 8 12 3 7 8"/>
+                                    <line x1="12" y1="3" x2="12" y2="15"/>
+                                </svg>
+                            </div>
+                            <h2>Drag & Drop your compiled file here</h2>
+                            <p>or click to browse from your computer</p>
+                            
+                            <div class="supported-formats">
+                                <div class="format-card" data-ext=".class">
+                                    <div class="format-icon java-icon">JD</div>
+                                    <span>Java .class</span>
+                                </div>
+                                <div class="format-card" data-ext=".wasm">
+                                    <div class="format-icon wasm-icon">WASM</div>
+                                    <span>WebAssembly</span>
+                                </div>
+                                <div class="format-card" data-ext=".pyc">
+                                    <div class="format-icon python-icon">PYC</div>
+                                    <span>Python .pyc</span>
+                                </div>
+                                <div class="format-card" data-ext=".ex4">
+                                    <div class="format-icon mql-icon">MQL4</div>
+                                    <span>MT4 .ex4</span>
+                                </div>
+                                <div class="format-card" data-ext=".ex5">
+                                    <div class="format-icon mql-icon">MQL5</div>
+                                    <span>MT5 .ex5</span>
+                                </div>
+                                <div class="format-card" data-ext=".js">
+                                    <div class="format-icon js-icon">JS</div>
+                                    <span>Obfuscated JS</span>
+                                </div>
+                            </div>
+                            <span class="privacy-note">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align: middle; margin-right: 4px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                Files are processed entirely in your browser. No data ever leaves your computer.
+                            </span>
+                        </div>
+                    </label>
+                </div>
+            </section>
+
+            <!-- Workspace Screen -->
+            <section class="screen" id="workspaceScreen">
+                <div class="workspace-layout">
+                    <!-- Left Sidebar (Explorer) -->
+                    <aside class="workspace-sidebar">
+                        <div class="sidebar-section">
+                            <h3 class="section-title">File Outline</h3>
+                            <div class="sidebar-content">
+                                <div class="file-info-box">
+                                    <div class="file-meta">
+                                        <span class="meta-label">Type:</span>
+                                        <span class="meta-val" id="fileTypeBadge">-</span>
+                                    </div>
+                                    <div class="file-meta">
+                                        <span class="meta-label">Size:</span>
+                                        <span class="meta-val" id="fileSizeBadge">0 KB</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="search-box">
+                                    <input type="text" id="outlineSearch" placeholder="Search structures...">
+                                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                </div>
+                                
+                                <div class="outline-tree-wrapper">
+                                    <ul class="outline-tree" id="outlineTree">
+                                        <!-- Dynamically generated tree elements -->
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </aside>
+
+                    <!-- Center Panel (Code Viewer) -->
+                    <div class="workspace-editor">
+                        <div class="editor-tabs">
+                            <button class="tab-btn active" data-tab="decompiled">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                                Decompiled
+                            </button>
+                            <button class="tab-btn" data-tab="disassembly">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>
+                                Disassembly
+                            </button>
+                            <button class="tab-btn" data-tab="hexview" id="tabHex">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
+                                Hex Viewer
+                            </button>
+                            
+                            <div class="editor-actions">
+                                <button class="btn btn-secondary btn-sm" id="btnCopyCode" title="Copy Content">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                                    Copy
+                                </button>
+                                <button class="btn btn-secondary btn-sm" id="btnDownloadCode" title="Download File">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                    Download
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Code Content Panel -->
+                        <div class="editor-content-container">
+                            <div class="editor-panel active" id="panelDecompiled">
+                                <pre class="line-numbers" id="decompiledLineNumbers"></pre>
+                                <pre class="code-output" id="decompiledCodeOutput">Loading...</pre>
+                            </div>
+                            <div class="editor-panel" id="panelDisassembly">
+                                <pre class="line-numbers" id="disassemblyLineNumbers"></pre>
+                                <pre class="code-output" id="disassemblyCodeOutput">Loading...</pre>
+                            </div>
+                            <div class="editor-panel hex-editor-panel" id="panelHexview">
+                                <div class="hex-header">
+                                    <div class="hex-offset-header">Offset</div>
+                                    <div class="hex-bytes-header">
+                                        <span>00</span><span>01</span><span>02</span><span>03</span><span>04</span><span>05</span><span>06</span><span>07</span> <span>08</span><span>09</span><span>0A</span><span>0B</span><span>0C</span><span>0D</span><span>0E</span><span>0F</span>
+                                    </div>
+                                    <div class="hex-ascii-header">Decoded Text</div>
+                                </div>
+                                <div class="hex-grid" id="hexGrid">
+                                    <!-- Populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Sidebar (Inspector) -->
+                    <aside class="workspace-inspector">
+                        <div class="sidebar-section">
+                            <h3 class="section-title" id="inspectorTitle">Inspector</h3>
+                            <div class="sidebar-content scrollable" id="inspectorContent">
+                                <div class="welcome-inspector">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                    <h4>Inspection Panel</h4>
+                                    <p>Select a method, class member, or constant pool entry from the outline to inspect its properties and references in detail.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </aside>
+                </div>
+            </section>
+        </main>
+
+        <!-- Help Modal -->
+        <div class="modal-overlay" id="helpModal">
+            <div class="modal">
+                <div class="modal-header">
+                    <h2>ForgeDec Documentation</h2>
+                    <button class="modal-close" id="btnCloseHelp">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <h3>About ForgeDec</h3>
+                    <p>ForgeDec is a state-of-the-art byte-level inspector and decompiler designed for web and systems developers. It runs 100% in your browser using structured binary parsers written in JavaScript.</p>
+                    
+                    <h3>Supported File Formats</h3>
+                    <ul>
+                        <li><strong>Java Class Files (`.class`)</strong>: Reads constant pools, parses bytecode instructions, visualizes fields & methods, and reconstructs Java code structures.</li>
+                        <li><strong>WebAssembly (`.wasm`)</strong>: Parses all binary sections, decodes function signatures and imports/exports, and disassembles instructions to standard WAT representation.</li>
+                        <li><strong>Python Compiled Bytecode (`.pyc`)</strong>: Supports Python compiler magic headers, walks the marshalled code objects, and lists JVM-like Python instructions.</li>
+                        <li><strong>MetaTrader 4 & 5 (`.ex4`, `.ex5`)</strong>: Extracts build versions, compiler timestamps, system imports/DLL targets, and scans the binary to decrypt and extract string constant tables.</li>
+                        <li><strong>JavaScript (`.js`)</strong>: Beautifies minified javascript, expands hex/unicode strings, and reformats packed scripts.</li>
+                    </ul>
+
+                    <h3>Interactive Features</h3>
+                    <ul>
+                        <li><strong>Linked Hex View</strong>: View raw binary representation side-by-side with disassembly. Hovering over code components will highlight corresponding byte offsets!</li>
+                        <li><strong>Constant Pool Browser</strong>: (Java) Explore references, symbols, types, and strings used in the binary with single-click tracking.</li>
+                        <li><strong>Instant Outline</strong>: Rapidly search and jump to classes, methods, imports, and variables within large binaries.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js_deobfuscator.js"></script>
+    <script src="pyc_parser.js"></script>
+    <script src="wasm_parser.js"></script>
+    <script src="java_parser.js"></script>
+    <script src="mql_parser.js"></script>
+    <script src="decompiler.js"></script>
+</body>
+</html>
